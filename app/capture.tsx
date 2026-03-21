@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { SafeAreaView, View, Text, Pressable, StyleSheet, Image, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { SafeAreaView, View, Text, Pressable, StyleSheet, Image, ScrollView, Alert, ActivityIndicator, Animated, Easing } from 'react-native'
 import * as DocumentPicker from 'expo-document-picker'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
@@ -16,6 +16,16 @@ const LOADING_MESSAGES = [
   'Almost done...',
 ]
 
+// #7 — animated typing placeholders for Option 2
+const TYPING_PLACEHOLDERS = [
+  '90mm x 45mm H2 pine framing',
+  'James Hardie Villaboard 6mm',
+  'Colorbond Trimdek roofing sheets',
+  'R2.5 Knauf Earthwool batts',
+  '10mm reo bar 6m lengths',
+  'Blueboard 2400 x 1200',
+]
+
 type SelectedFile = {
   name: string
   uri: string
@@ -24,12 +34,71 @@ type SelectedFile = {
   kind: 'photo' | 'document'
 }
 
+// #7 — hook for cycling placeholder text with typing effect
+function useTypingPlaceholder(strings: string[], typingSpeed = 45, pauseMs = 2200) {
+  const [text, setText] = useState('')
+  const indexRef = useRef(0)
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>
+    let charIndex = 0
+    let currentString = strings[0]
+    let typing = true
+
+    function tick() {
+      if (typing) {
+        charIndex++
+        setText(currentString.slice(0, charIndex))
+        if (charIndex >= currentString.length) {
+          typing = false
+          timeout = setTimeout(tick, pauseMs)
+          return
+        }
+        timeout = setTimeout(tick, typingSpeed)
+      } else {
+        // move to next string
+        indexRef.current = (indexRef.current + 1) % strings.length
+        currentString = strings[indexRef.current]
+        charIndex = 0
+        typing = true
+        setText('')
+        timeout = setTimeout(tick, 300)
+      }
+    }
+
+    timeout = setTimeout(tick, 600)
+    return () => clearTimeout(timeout)
+  }, [])
+
+  return text
+}
+
 export default function CaptureScreen() {
   const { setItems } = useRFQ()
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [msgIndex, setMsgIndex] = useState(0)
+
+  // #6 — pulse animation for "Read my list" button
+  const pulseAnim = useRef(new Animated.Value(1)).current
+
+  useEffect(() => {
+    if (selectedFile && !loading) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.04, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      ).start()
+    } else {
+      pulseAnim.stopAnimation()
+      pulseAnim.setValue(1)
+    }
+  }, [selectedFile, loading])
+
+  // #7 — typing placeholder
+  const typingText = useTypingPlaceholder(TYPING_PLACEHOLDERS)
 
   async function parseFile() {
     if (!selectedFile) return
@@ -184,13 +253,22 @@ export default function CaptureScreen() {
 
             <Text style={styles.cardTitle}>Upload a materials list</Text>
 
-            <View style={styles.imageWrap}>
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=1200&q=80' }}
-                style={styles.preview}
-                resizeMode="cover"
-              />
-            </View>
+            {/* #5 & #8 — show thumbnail if photo selected, else sample handwritten image */}
+            <Pressable onPress={handleUpload} style={styles.imageWrap}>
+              {selectedFile && selectedFile.kind === 'photo' ? (
+                <Image
+                  source={{ uri: selectedFile.uri }}
+                  style={styles.preview}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Image
+                  source={require('../assets/images/sample-handwritten-list.png')}
+                  style={styles.preview}
+                  resizeMode="cover"
+                />
+              )}
+            </Pressable>
 
             <View style={styles.chipRow}>
               <View style={styles.chip}><Text style={styles.chipText}>Handwritten list</Text></View>
@@ -211,15 +289,18 @@ export default function CaptureScreen() {
               </View>
             ) : null}
 
-            <Pressable
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              onPress={selectedFile ? parseFile : handleUpload}
-              disabled={loading}
-            >
-              <Text style={styles.primaryButtonText}>
-                {loading ? LOADING_MESSAGES[msgIndex] : selectedFile ? 'Read my list' : 'Choose file or photo'}
-              </Text>
-            </Pressable>
+            {/* #6 — pulse animation when file selected */}
+            <Animated.View style={selectedFile && !loading ? { transform: [{ scale: pulseAnim }] } : undefined}>
+              <Pressable
+                style={[styles.primaryButton, loading && styles.buttonDisabled]}
+                onPress={selectedFile ? parseFile : handleUpload}
+                disabled={loading}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {loading ? LOADING_MESSAGES[msgIndex] : selectedFile ? 'Read my list' : 'Choose file or photo'}
+                </Text>
+              </Pressable>
+            </Animated.View>
 
             {selectedFile && !loading ? (
               <Pressable style={styles.changeButton} onPress={handleUpload}>
@@ -232,8 +313,14 @@ export default function CaptureScreen() {
             <Text style={styles.optionLabel}>OPTION 2</Text>
             <Text style={styles.cardTitle}>Add items manually</Text>
 
+            {/* #7 — animated typing placeholder mock */}
             <View style={styles.manualMock}>
-              <View style={styles.mockLineLong} />
+              <View style={styles.mockInputLive}>
+                <Text style={styles.mockTypingText} numberOfLines={1}>
+                  {typingText}
+                  <Text style={styles.mockCursor}>|</Text>
+                </Text>
+              </View>
               <View style={styles.mockRow}>
                 <View style={styles.mockLineShort} />
                 <View style={styles.mockLineShort} />
@@ -255,7 +342,7 @@ export default function CaptureScreen() {
           <View style={styles.loadingCard}>
             <ActivityIndicator size="large" color="#185D7A" />
             <Text style={styles.loadingTitle}>{LOADING_MESSAGES[msgIndex]}</Text>
-            <Text style={styles.loadingSubtitle}>This usually takes 15–30 seconds</Text>
+            <Text style={styles.loadingSubtitle}>This usually takes 15\u201330 seconds</Text>
           </View>
         </View>
       ) : null}
@@ -305,7 +392,7 @@ const styles = StyleSheet.create({
   badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
   cardTitle: { fontSize: 18, lineHeight: 24, fontWeight: '800', color: '#1F5F7C' },
   imageWrap: { borderRadius: 18, overflow: 'hidden', backgroundColor: '#EEF3F6' },
-  preview: { width: '100%', height: 170 },
+  preview: { width: '100%', height: 200 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     backgroundColor: '#E8F0F2',
@@ -344,13 +431,21 @@ const styles = StyleSheet.create({
     borderRadius: 16, paddingVertical: 16, alignItems: 'center',
   },
   secondaryButtonText: { color: '#1F5F7C', fontSize: 16, fontWeight: '800' },
+  // #7 — animated mock inputs
   manualMock: {
     backgroundColor: '#F7F9FA', borderRadius: 18,
     borderWidth: 1, borderColor: '#D7E0E5', padding: 12, gap: 10,
   },
-  mockLineLong: {
+  mockInputLive: {
     height: 42, borderRadius: 14, backgroundColor: '#FFFFFF',
     borderWidth: 1, borderColor: '#D7E0E5',
+    justifyContent: 'center', paddingHorizontal: 14,
+  },
+  mockTypingText: {
+    fontSize: 14, color: '#97A3AF', fontStyle: 'italic',
+  },
+  mockCursor: {
+    color: '#F47A20', fontWeight: '300',
   },
   mockRow: { flexDirection: 'row', gap: 10 },
   mockLineShort: {

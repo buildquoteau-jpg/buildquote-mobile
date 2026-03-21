@@ -48,7 +48,7 @@ export default function StepHeader({ step }: { step: number }) {
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: '#FFFFFF',
-    paddingTop: 4,
+    paddingTop: 8,
     paddingBottom: 6,
     paddingHorizontal: 16,
     borderBottomWidth: 1,

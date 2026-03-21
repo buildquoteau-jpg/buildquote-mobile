@@ -45,13 +45,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'flex-start',
-    gap: 14,
+    justifyContent: 'center',
+    gap: 20,
   },
   hero: {
     gap: 6,
-    paddingTop: 4,
-    marginTop: -6,
     alignItems: 'center',
   },
   title: {

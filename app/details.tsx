@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { SafeAreaView, View, Text, TextInput, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { SafeAreaView, View, Text, TextInput, Pressable, StyleSheet, ScrollView, Modal } from 'react-native'
 import { router } from 'expo-router'
 import StepHeader from '../components/StepHeader'
 import { useRFQ } from '../lib/RFQContext'
@@ -13,11 +13,93 @@ function blankItem(): LineItem {
   }
 }
 
+// #12 — normalise string for fuzzy duplicate matching
+function norm(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function findDuplicates(existing: LineItem[], incoming: LineItem[]): LineItem[] {
+  const existingNames = new Set(existing.filter(i => i.name.trim()).map(i => norm(i.name)))
+  return incoming.filter(i => i.name.trim() && existingNames.has(norm(i.name)))
+}
+
 export default function DetailsScreen() {
   const { items, setItems } = useRFQ()
   const [localItems, setLocalItems] = useState<LineItem[]>(
     items.length > 0 ? items : [blankItem()]
   )
+
+  // #12 — track what we've already merged so we can detect new arrivals
+  const mergedItemsRef = useRef<string>(JSON.stringify(items.map(i => i.id)))
+
+  // #12 — duplicate detection state
+  const [showDupeModal, setShowDupeModal] = useState(false)
+  const [pendingNewItems, setPendingNewItems] = useState<LineItem[]>([])
+  const [dupeNames, setDupeNames] = useState<string[]>([])
+
+  // #12 — detect when context items change (user uploaded a second list from capture)
+  useEffect(() => {
+    const currentIds = JSON.stringify(items.map(i => i.id))
+    if (currentIds === mergedItemsRef.current) return
+    if (items.length === 0) return
+
+    // Items changed — these are new items from a second upload
+    const existingNamed = localItems.filter(i => i.name.trim())
+
+    if (existingNamed.length === 0) {
+      // No existing items, just replace
+      setLocalItems(items.length > 0 ? items : [blankItem()])
+      mergedItemsRef.current = currentIds
+      return
+    }
+
+    // Check for duplicates
+    const dupes = findDuplicates(existingNamed, items)
+    if (dupes.length > 0) {
+      setDupeNames(dupes.map(d => d.name))
+      setPendingNewItems(items)
+      setShowDupeModal(true)
+    } else {
+      // No duplicates, just merge
+      setLocalItems(prev => {
+        const cleaned = prev.filter(i => i.name.trim())
+        return [...cleaned, ...items]
+      })
+      mergedItemsRef.current = currentIds
+    }
+  }, [items])
+
+  function handleMergeKeepBoth() {
+    setLocalItems(prev => {
+      const cleaned = prev.filter(i => i.name.trim())
+      return [...cleaned, ...pendingNewItems]
+    })
+    mergedItemsRef.current = JSON.stringify(pendingNewItems.map(i => i.id))
+    setShowDupeModal(false)
+    setPendingNewItems([])
+    setDupeNames([])
+  }
+
+  function handleMergeSkipDupes() {
+    const existingNames = new Set(localItems.filter(i => i.name.trim()).map(i => norm(i.name)))
+    const deduped = pendingNewItems.filter(i => !existingNames.has(norm(i.name)))
+    setLocalItems(prev => {
+      const cleaned = prev.filter(i => i.name.trim())
+      return [...cleaned, ...deduped]
+    })
+    mergedItemsRef.current = JSON.stringify(pendingNewItems.map(i => i.id))
+    setShowDupeModal(false)
+    setPendingNewItems([])
+    setDupeNames([])
+  }
+
+  function handleMergeReplaceAll() {
+    setLocalItems(pendingNewItems.length > 0 ? pendingNewItems : [blankItem()])
+    mergedItemsRef.current = JSON.stringify(pendingNewItems.map(i => i.id))
+    setShowDupeModal(false)
+    setPendingNewItems([])
+    setDupeNames([])
+  }
 
   const lowCount = localItems.filter(i => i.confidence === 'low').length
 
@@ -54,7 +136,7 @@ export default function DetailsScreen() {
     <SafeAreaView style={styles.safe}>
       <StepHeader step={2} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <View style={styles.hero}>
             <Text style={styles.title}>Review and edit your items</Text>
@@ -87,7 +169,7 @@ export default function DetailsScreen() {
                     </Text>
                   </View>
                   <Pressable onPress={() => removeItem(item.id)} style={styles.removeBtn}>
-                    <Text style={styles.removeBtnText}>✕</Text>
+                    <Text style={styles.removeBtnText}>{"\u2715"}</Text>
                   </Pressable>
                 </View>
 
@@ -125,6 +207,7 @@ export default function DetailsScreen() {
                     onChangeText={v => update(item.id, 'qty', v)}
                     placeholder="Qty"
                     placeholderTextColor="#97A3AF"
+                    keyboardType="numeric"
                     style={[styles.input, styles.third, isLow && styles.inputReview]}
                   />
                 </View>
@@ -161,6 +244,41 @@ export default function DetailsScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* #12 — Duplicate detection modal */}
+      {showDupeModal ? (
+        <Modal transparent animationType="fade" visible={showDupeModal}>
+          <View style={styles.overlay}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>Duplicates found</Text>
+              <Text style={styles.modalBody}>
+                {dupeNames.length} item{dupeNames.length !== 1 ? 's' : ''} from your new list already exist{dupeNames.length === 1 ? 's' : ''}:
+              </Text>
+              <View style={styles.dupeList}>
+                {dupeNames.slice(0, 5).map((name, i) => (
+                  <Text key={i} style={styles.dupeName} numberOfLines={1}>• {name}</Text>
+                ))}
+                {dupeNames.length > 5 ? (
+                  <Text style={styles.dupeName}>...and {dupeNames.length - 5} more</Text>
+                ) : null}
+              </View>
+
+              <Pressable style={styles.modalBtn} onPress={handleMergeKeepBoth}>
+                <Text style={styles.modalBtnText}>Keep both (add all)</Text>
+              </Pressable>
+              <Pressable style={styles.modalBtn} onPress={handleMergeSkipDupes}>
+                <Text style={styles.modalBtnText}>Skip duplicates</Text>
+              </Pressable>
+              <Pressable style={[styles.modalBtn, styles.modalBtnOutline]} onPress={handleMergeReplaceAll}>
+                <Text style={styles.modalBtnOutlineText}>Replace entire list</Text>
+              </Pressable>
+              <Pressable onPress={() => { setShowDupeModal(false); setPendingNewItems([]); setDupeNames([]) }}>
+                <Text style={styles.back}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </SafeAreaView>
   )
 }
@@ -220,4 +338,23 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.5 },
   primaryButtonText: { fontSize: 16, lineHeight: 22, fontWeight: '800', color: '#FFFFFF' },
   back: { marginTop: 12, textAlign: 'center', color: '#445C70', fontSize: 15 },
+  // #12 — duplicate modal
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modal: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 22, gap: 14 },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1F2A37' },
+  modalBody: { fontSize: 14, lineHeight: 20, color: '#435260' },
+  dupeList: {
+    backgroundColor: '#FFF9F3', borderRadius: 14, padding: 12,
+    borderWidth: 1, borderColor: '#F4D5A0', gap: 4,
+  },
+  dupeName: { fontSize: 14, color: '#8A4B14', fontWeight: '600' },
+  modalBtn: {
+    backgroundColor: '#F47A20', borderRadius: 16,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  modalBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  modalBtnOutline: {
+    backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#D2DBE1',
+  },
+  modalBtnOutlineText: { color: '#445C70', fontSize: 15, fontWeight: '800' },
 })
