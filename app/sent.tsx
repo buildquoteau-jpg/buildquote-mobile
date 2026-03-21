@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { SafeAreaView, View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { SafeAreaView, View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native'
 import { router } from 'expo-router'
 import StepHeader from '../components/StepHeader'
 import { useRFQ } from '../lib/RFQContext'
+import { previewPDF } from '../lib/pdfHelper'
 
 const API_BASE = 'https://buildquote.com.au'
 
@@ -19,6 +20,7 @@ export default function SentScreen() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [rfqId, setRfqId] = useState('')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   useEffect(() => {
     sendRFQ()
@@ -45,22 +47,30 @@ export default function SentScreen() {
         desc: sanitize(item.desc),
         sku: sanitize(item.sku),
         uom: sanitize(item.uom),
+        qty: sanitize(item.qty),
       }));
       const cleanSupplier = {
         ...rfq.supplier,
         supplierName: sanitize(rfq.supplier.supplierName),
       };
+      const cleanBuilder = {
+        builderName: sanitize(rfq.builder.builderName),
+        company: sanitize(rfq.builder.company),
+        abn: sanitize(rfq.builder.abn),
+        phone: sanitize(rfq.builder.phone),
+        email: sanitize(rfq.builder.email),
+      };
       const payload = {
         rfqId: id,
-        builder: rfq.builder,
+        builder: cleanBuilder,
         supplier: cleanSupplier,
         items: cleanItems,
         delivery: rfq.delivery,
         dateRequired: rfq.dateRequired,
-        message: rfq.message,
-        projectReference: rfq.projectReference,
-        siteAddress: rfq.siteAddress,
-        siteSuburb: rfq.siteSuburb,
+        message: sanitize(rfq.message),
+        projectReference: sanitize(rfq.projectReference),
+        siteAddress: sanitize(rfq.siteAddress),
+        siteSuburb: sanitize(rfq.siteSuburb),
         sendToSupplier: rfq.sendToSupplier,
         sendCopyToSelf: rfq.sendCopyToSelf,
       }
@@ -88,6 +98,47 @@ export default function SentScreen() {
   function handleNewRFQ() {
     rfq.resetAll()
     router.replace('/')
+  }
+
+  async function handleDownloadPDF() {
+    setPdfLoading(true)
+    try {
+      const sanitize = (s: string) => s.replace(/[^\x00-\x7F]/g, m => {
+        if (m === "\u2014" || m === "\u2013") return "-";
+        if (m === "\u2018" || m === "\u2019") return "'";
+        if (m === "\u201C" || m === "\u201D") return '"';
+        if (m === "\u2022") return "-";
+        return "";
+      });
+      const payload = {
+        rfqId,
+        builder: {
+          builderName: sanitize(rfq.builder.builderName),
+          company: sanitize(rfq.builder.company),
+          abn: sanitize(rfq.builder.abn),
+          phone: sanitize(rfq.builder.phone),
+          email: sanitize(rfq.builder.email),
+        },
+        supplier: { ...rfq.supplier, supplierName: sanitize(rfq.supplier.supplierName) },
+        items: rfq.items.map(item => ({
+          ...item, name: sanitize(item.name), desc: sanitize(item.desc),
+          sku: sanitize(item.sku), uom: sanitize(item.uom), qty: sanitize(item.qty),
+        })),
+        delivery: rfq.delivery,
+        dateRequired: rfq.dateRequired,
+        message: sanitize(rfq.message),
+        projectReference: sanitize(rfq.projectReference),
+        siteAddress: sanitize(rfq.siteAddress),
+        siteSuburb: sanitize(rfq.siteSuburb),
+        sendToSupplier: rfq.sendToSupplier,
+        sendCopyToSelf: rfq.sendCopyToSelf,
+      };
+      await previewPDF(payload)
+    } catch (err: any) {
+      Alert.alert('PDF Error', err?.message || 'Could not generate PDF')
+    } finally {
+      setPdfLoading(false)
+    }
   }
 
   if (sending) {
@@ -150,6 +201,16 @@ export default function SentScreen() {
             <Text style={styles.statusText}>• Review their quote and confirm before ordering</Text>
           </View>
 
+          <Pressable
+            style={[styles.downloadButton, pdfLoading && styles.buttonDisabled]}
+            onPress={handleDownloadPDF}
+            disabled={pdfLoading}
+          >
+            {pdfLoading
+              ? <ActivityIndicator color="#185D7A" />
+              : <Text style={styles.downloadButtonText}>Download PDF</Text>}
+          </Pressable>
+
           <Pressable style={styles.primaryButton} onPress={handleNewRFQ}>
             <Text style={styles.primaryButtonText}>Start a new RFQ</Text>
           </Pressable>
@@ -190,6 +251,12 @@ const styles = StyleSheet.create({
     paddingVertical: 18, alignItems: 'center', marginTop: 4,
   },
   primaryButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  downloadButton: {
+    borderWidth: 1.5, borderColor: '#185D7A', borderRadius: 18,
+    paddingVertical: 16, alignItems: 'center', backgroundColor: '#FFFFFF',
+  },
+  downloadButtonText: { color: '#185D7A', fontWeight: '800', fontSize: 16 },
+  buttonDisabled: { opacity: 0.5 },
   secondaryButton: {
     borderWidth: 1.5, borderColor: '#69B8A7', borderRadius: 18,
     paddingVertical: 18, alignItems: 'center', backgroundColor: '#FFFFFF',
