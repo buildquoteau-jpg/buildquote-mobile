@@ -1,5 +1,10 @@
 import { Stack } from 'expo-router'
+import { RFQProvider } from '../lib/RFQContext'
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />
+  return (
+    <RFQProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </RFQProvider>
+  )
 }

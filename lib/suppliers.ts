@@ -1,0 +1,50 @@
+export interface SupplierEntry {
+  name: string
+  email: string
+  phone: string
+  hidden?: boolean
+  sandbox?: boolean
+}
+
+export const SUPPLIERS: SupplierEntry[] = [
+  { name: 'Test Supplier', email: '', phone: '', hidden: true },
+  { name: 'Sandbox — Test with your own email', email: '', phone: '', sandbox: true },
+  { name: 'Bunnings Busselton', email: 'busselton@bunnings.com.au', phone: '+61 8 9752 6100' },
+  { name: 'Bunnings Bunbury', email: 'bunbury@bunnings.com.au', phone: '+61 8 9722 2500' },
+  { name: 'Bunnings Margaret River', email: 'margaretriver@bunnings.com.au', phone: '+61 8 9758 7000' },
+  { name: 'Bunnings Albany', email: 'albany@bunnings.com.au', phone: '+61 8 6821 1200' },
+  { name: 'Bunnings Australind', email: 'australind@bunnings.com.au', phone: '+61 8 9797 4600' },
+  { name: 'Reece Plumbing Busselton', email: 'busselton.wa@reece.com.au', phone: '+61 8 9752 9810' },
+  { name: 'Reece Plumbing Bunbury', email: 'bunbury.wa@reece.com.au', phone: '+61 8 9724 3510' },
+  { name: 'Reece Plumbing Margaret River', email: 'margaretriver.wa@reece.com.au', phone: '+61 8 9757 8910' },
+  { name: 'M&B Trade Centre Bunbury', email: 'bunbury@mbsales.net.au', phone: '+61 8 9724 8900' },
+  { name: 'M&B Trade Centre Busselton', email: 'busselton@mbsales.net.au', phone: '+61 8 9752 7900' },
+  { name: 'M&B Trade Centre Albany', email: 'albany@mbsales.net.au', phone: '+61 8 9844 5200' },
+  { name: 'BGC Cement', email: 'sales@bgc.com.au', phone: '+61 8 9311 8000' },
+  { name: 'Midalia Steel', email: 'sales@midaliasteel.com.au', phone: '+61 8 9302 2700' },
+  { name: 'Stratco Bunbury', email: 'bunbury@stratco.com.au', phone: '+61 1300 699 128' },
+  { name: 'Stratco Busselton', email: 'busselton@stratco.com.au', phone: '+61 1300 699 128' },
+  { name: 'Tradelink Bunbury', email: 'bunbury@tradelink.com.au', phone: '+61 8 9729 4300' },
+  { name: 'Tradelink Busselton', email: 'busselton@tradelink.com.au', phone: '+61 8 9752 3126' },
+  { name: 'Gyprock Trade Bunbury', email: 'gtcsupport@csr.com.au', phone: '+61 8 9745 1100' },
+  { name: 'Gyprock Trade Albany', email: 'gtcsupport@csr.com.au', phone: '+61 8 6819 5700' },
+  { name: 'Project Building Supplies South West', email: 'sales@projectbuildingsupplies.com.au', phone: '+61 428 726 452' },
+  { name: 'Busselton Building Products', email: 'dispatch@busseltonbuilding.com.au', phone: '+61 8 9752 1733' },
+  { name: 'Easy Concrete Supply Perth', email: 'info@easyconcretesupply.com.au', phone: '+61 8 6157 1133' },
+  { name: 'WA Premix', email: 'adam.a@walimestone.com', phone: '+61 8 9405 9232' },
+  { name: 'Roof Top Industries', email: 'rooftopindustries@bigpond.com', phone: '+61 8 9309 3993' },
+  { name: 'Metroll', email: 'paul.rodgers@perth.metroll.com.au', phone: '+61 8 9365 5444' },
+  { name: 'Perth Concrete Supplies', email: 'sales@oxide.com.au', phone: '+61 1300 655 853' },
+  { name: 'Roof Plumbers Warehouse & Building Supplies', email: 'info@roofplumberswarehouse.com.au', phone: '+61 8 9390 4626' },
+  { name: 'Statewide Building Products', email: 'admin@statewidebuildingproducts.com.au', phone: '+61 8 9399 3276' },
+  { name: 'Beyond Bricks', email: 'glenn.march@beyondbrickswa.com.au', phone: '+61 8 9721 9777' },
+  { name: 'Galvins Plumbing Supplies', email: 'yanchep@galvins.com.au', phone: '+61 8 9752 7800' },
+  { name: 'Galvins Bunbury', email: 'yanchep@galvins.com.au', phone: '+61 8 9726 7600' },
+  { name: 'The Sink Warehouse', email: 'daniel@sinkwarehouse.com.au', phone: '+61 8 9792 4224' },
+  { name: 'Fielders', email: 'gporter@fielders.com.au', phone: '+61 8 9213 8905' },
+  { name: 'Hanson Construction Materials', email: 'charlotte.hobbs@hanson.com', phone: '+61 8 9726 0233' },
+  { name: 'Australind Pre-Mix', email: 'dean.baker@australindpremix.com.au', phone: '+61 8 9725 8787' },
+  { name: 'Premium Building Supplies Busselton', email: 'premiumbuilding@westnet.com.au', phone: '+61 8 9754 2193' },
+  { name: 'Geographe Timber & Hardware', email: 'geohware@highway1.com.au', phone: '+61 8 9752 1408' },
+  { name: 'Lincoln Sentry', email: 'phebinger@lincolnsentry.com.au', phone: '+61 8 9261 5303' },
+]

@@ -22,9 +22,8 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Start a new RFQ</Text>
           <Text style={styles.cardText}>
-            Send clear building materials quote requests to your trusted suppliers in seconds.
+            Send clear building materials quote requests to your trusted suppliers.
           </Text>
 
           <Pressable style={styles.primaryButton} onPress={() => router.push('/capture')}>
@@ -32,13 +31,6 @@ export default function HomeScreen() {
           </Pressable>
 
           <Text style={styles.helper}>Takes about 60 seconds</Text>
-        </View>
-
-        <View style={styles.footerCard}>
-          <Text style={styles.footerTitle}>Built for busy builders.</Text>
-          <Text style={styles.footerText}>
-            BuiltQuote Mobile is the on-site version of your RFQ workflow.
-          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -53,12 +45,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'space-between',
-    gap: 16,
+    justifyContent: 'flex-start',
+    gap: 14,
   },
   hero: {
     gap: 6,
-    paddingTop: 10,
+    paddingTop: 4,
+    marginTop: -6,
     alignItems: 'center',
   },
   title: {
@@ -72,7 +65,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 34,
     fontWeight: '800',
-    color: '#F47A20',
+    color: '#f97316',
     textAlign: 'center',
     marginTop: -2,
   },
@@ -80,12 +73,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#1F5F7C',
+    color: '#185D7A',
     textAlign: 'center',
     marginTop: 6,
   },
   arrow: {
-    color: '#F47A20',
+    color: '#f97316',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -98,19 +91,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
-  cardTitle: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '800',
-    color: '#1F2A37',
-  },
   cardText: {
     fontSize: 17,
     lineHeight: 25,
-    color: '#445C70',
+    color: '#1F2A37',
+    textAlign: 'center',
   },
   primaryButton: {
-    backgroundColor: '#F47A20',
+    backgroundColor: '#f97316',
     borderRadius: 18,
     paddingVertical: 18,
     alignItems: 'center',
@@ -125,25 +113,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#6B7280',
     fontSize: 14,
-  },
-  footerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#D6E0E6',
-  },
-  footerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1F2A37',
-    textAlign: 'center',
-  },
-  footerText: {
-    fontSize: 16,
-    lineHeight: 23,
-    color: '#445C70',
-    textAlign: 'center',
   },
 })

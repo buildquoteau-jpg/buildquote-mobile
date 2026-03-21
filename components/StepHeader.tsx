@@ -48,8 +48,8 @@ export default function StepHeader({ step }: { step: number }) {
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: '#FFFFFF',
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingTop: 4,
+    paddingBottom: 6,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E3E8EC',
@@ -60,20 +60,20 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   logo: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '800',
     letterSpacing: -0.4,
   },
   build: {
-    color: '#2F3E4F',
+    color: '#185D7A',
   },
   quote: {
-    color: '#F47A20',
+    color: '#f97316',
   },
   tagline: {
     marginTop: 2,
     fontSize: 12,
-    color: '#445C70',
+    color: '#185D7A',
     fontWeight: '600',
   },
   stepRow: {
@@ -93,10 +93,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#D2DBE1',
   },
   dotActive: {
-    backgroundColor: '#F47A20',
+    backgroundColor: '#f97316',
   },
   dotDone: {
-    backgroundColor: '#3E7C59',
+    backgroundColor: '#4FCBB0',
   },
   stepText: {
     fontSize: 11,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   stepTextActive: {
-    color: '#2F3E4F',
+    color: '#185D7A',
     fontWeight: '800',
   },
 })
