@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "buildquote-mobile",
+    "name": "BuildQuote",
     "slug": "buildquote-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 1
     },
     "web": {
       "output": "static",
@@ -45,6 +46,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "715e5f2d-da92-4e77-815a-7d6c1ca059d7"
+      }
     }
   }
 }
